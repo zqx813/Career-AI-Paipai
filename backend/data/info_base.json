@@ -1,0 +1,190 @@
+{
+  "job_requirements": {
+    "产品经理": {
+      "core_skills": ["需求分析", "用户研究", "竞品分析", "原型设计", "PRD撰写", "数据分析", "项目管理"],
+      "common_requirements": "熟悉产品生命周期管理，能独立完成需求文档和原型设计，具备SQL/Excel数据分析能力，有完整项目经验优先",
+      "source": "2025届互联网校招产品岗JD汇总"
+    },
+    "数据分析师": {
+      "core_skills": ["SQL", "Python/R", "统计学", "数据可视化", "Excel", "业务分析", "机器学习基础"],
+      "common_requirements": "熟练掌握SQL和Python，能独立完成从数据提取到报告呈现的全流程，有AB测试经验优先",
+      "source": "2025届互联网校招数据岗JD汇总"
+    },
+    "前端开发工程师": {
+      "core_skills": ["HTML/CSS", "JavaScript", "React/Vue", "TypeScript", "Git", "Webpack/Vite", "HTTP协议"],
+      "common_requirements": "熟悉React或Vue框架，理解组件化和状态管理，有项目实战经验，了解前端性能优化",
+      "source": "2025届互联网校招前端岗JD汇总"
+    },
+    "后端开发工程师": {
+      "core_skills": ["Java/Python/Go", "数据库设计", "SQL/NoSQL", "Linux", "数据结构与算法", "微服务", "Git"],
+      "common_requirements": "扎实的计算机基础，熟悉至少一门后端语言和常用框架，有数据库设计经验",
+      "source": "2025届互联网校招后端岗JD汇总"
+    },
+    "运营": {
+      "core_skills": ["用户运营", "内容运营", "活动策划", "数据分析", "社群运营", "文案写作", "Excel"],
+      "common_requirements": "对数据敏感，有活动策划或内容运营经验，能独立完成运营方案，了解用户增长方法论",
+      "source": "2025届互联网校招运营岗JD汇总"
+    },
+    "市场营销": {
+      "core_skills": ["市场调研", "品牌策划", "广告投放", "社媒运营", "数据分析", "文案创意", "项目管理"],
+      "common_requirements": "有市场调研或品牌策划经验，熟悉主流社交媒体玩法，有数据驱动的营销思维",
+      "source": "2025届校招市场岗JD汇总"
+    },
+    "人力资源": {
+      "core_skills": ["招聘", "培训", "绩效管理", "员工关系", "劳动法", "沟通协调", "Excel"],
+      "common_requirements": "了解人力资源六大模块，有招聘或员工关系相关实习经验优先",
+      "source": "2025届校招HR岗JD汇总"
+    },
+    "UX设计师": {
+      "core_skills": ["用户研究", "交互设计", "视觉设计", "Figma/Sketch", "设计系统", "可用性测试", "原型设计"],
+      "common_requirements": "有完整的设计作品集，熟悉设计规范和人机交互原则，有用户研究经验优先",
+      "source": "2025届互联网校招设计岗JD汇总"
+    }
+  },
+  "competitions": [
+    {
+      "name": "Kaggle 数据科学竞赛",
+      "platform": "Kaggle",
+      "suitable_for": "数据分析、机器学习方向",
+      "difficulty": "中高",
+      "description": "全球最大的数据科学竞赛平台，提供真实数据集和行业问题，对简历数据分析方向的加成很大",
+      "link": "kaggle.com/competitions"
+    },
+    {
+      "name": "阿里云天池大赛",
+      "platform": "阿里云",
+      "suitable_for": "算法、数据分析、AI方向",
+      "difficulty": "中高",
+      "description": "国内顶级数据竞赛平台，获奖者在互联网招聘中有明显优势",
+      "link": "tianchi.aliyun.com"
+    },
+    {
+      "name": "蓝桥杯全国软件和信息技术专业人才大赛",
+      "platform": "蓝桥杯",
+      "suitable_for": "编程开发、算法方向",
+      "difficulty": "中",
+      "description": "国内规模最大的IT类学科竞赛之一，企业和高校认可度高",
+      "link": "lanqiao.cn"
+    },
+    {
+      "name": "全国大学生创新创业训练计划（大创）",
+      "platform": "教育部",
+      "suitable_for": "所有专业",
+      "difficulty": "中",
+      "description": "国家级项目立项和结题答辩，适合展示项目管理和研究能力",
+      "link": "-"
+    },
+    {
+      "name": "挑战杯全国大学生课外学术科技作品竞赛",
+      "platform": "挑战杯",
+      "suitable_for": "所有专业",
+      "difficulty": "中高",
+      "description": "国内最有影响力的大学生学术竞赛之一，含金量高",
+      "link": "tiaozhanbei.net"
+    },
+    {
+      "name": "中国大学生服务外包创新创业大赛",
+      "platform": "教育部/商务部",
+      "suitable_for": "计算机、商科方向",
+      "difficulty": "中",
+      "description": "企业出题、学生解题的模式，直接对接到企业真实需求",
+      "link": "fwwb.org.cn"
+    },
+    {
+      "name": "全国大学生数学建模竞赛（CUMCM）",
+      "platform": "中国工业与应用数学学会",
+      "suitable_for": "数据分析、数学、工程方向",
+      "difficulty": "中",
+      "description": "国内规模最大的数学建模竞赛，对数据分析和建模能力的有力证明",
+      "link": "mcm.edu.cn"
+    },
+    {
+      "name": "华为软件精英挑战赛",
+      "platform": "华为",
+      "suitable_for": "软件开发、算法方向",
+      "difficulty": "中高",
+      "description": "华为主办，题目贴近工程实际，获奖者有实习和校招绿色通道",
+      "link": "codecraft.huawei.com"
+    },
+    {
+      "name": "字节跳动 Byte Camp",
+      "platform": "字节跳动",
+      "suitable_for": "全栈开发、前端/后端、移动端方向",
+      "difficulty": "中高",
+      "description": "有培训和比赛两个环节，获奖选手有机会获得实习offer",
+      "link": "bytecamp.bytedance.com"
+    },
+    {
+      "name": "腾讯犀牛鸟开源人才培养计划",
+      "platform": "腾讯",
+      "suitable_for": "开源开发、云原生方向",
+      "difficulty": "中",
+      "description": "参与腾讯开源项目贡献，获得开源经验和企业导师指导",
+      "link": "opensource.tencent.com"
+    },
+    {
+      "name": "全国大学生广告艺术大赛（大广赛）",
+      "platform": "教育部",
+      "suitable_for": "市场营销、设计、广告方向",
+      "difficulty": "中",
+      "description": "国内最大的广告创意类竞赛，对营销和创意能力的佐证力强",
+      "link": "sun-ada.net"
+    }
+  ],
+  "learning_resources": [
+    {
+      "skill": "数据分析（SQL/Python）",
+      "resources": [
+        "SQL必知必会（书籍）",
+        "Coursera: Google Data Analytics 证书",
+        "牛客网SQL实战题库",
+        "Kaggle Learn 免费课程"
+      ]
+    },
+    {
+      "skill": "产品思维与原型设计",
+      "resources": [
+        "《启示录》- Marty Cagan",
+        "《俞军产品方法论》",
+        "产品经理P0系列课程（三节课）",
+        "Figma官方教程"
+      ]
+    },
+    {
+      "skill": "前端开发",
+      "resources": [
+        "MDN Web Docs",
+        "freeCodeCamp 前端课程",
+        "《JavaScript高级程序设计》",
+        "React官方文档（beta.react.dev）"
+      ]
+    },
+    {
+      "skill": "后端开发",
+      "resources": [
+        "《深入理解计算机系统》",
+        "bilibili: Java/SpringBoot教程（尚硅谷/黑马）",
+        "LeetCode算法题库",
+        "GitHub上star高的实战项目"
+      ]
+    },
+    {
+      "skill": "运营方法论",
+      "resources": [
+        "《运营之光》- 黄有璨",
+        "《增长黑客》- Sean Ellis",
+        "鸟哥笔记 / 运营研究社 文章",
+        "腾讯/阿里/字节的运营方法论公众号"
+      ]
+    },
+    {
+      "skill": "面试技巧",
+      "resources": [
+        "《程序员面试金典》",
+        "牛客网面经板块",
+        "STAR法则 + 金字塔原理",
+        "Mock Interview 练习"
+      ]
+    }
+  ]
+}

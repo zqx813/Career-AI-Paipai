@@ -1,0 +1,31 @@
+# 环境变量（含 API Key，不进仓库）
+.env
+.env.local
+.env.test
+.env.release
+
+# 数据库文件
+*.db
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+.next/
+
+# IDE
+.vscode/
+.idea/
+
+# 上传文件
+backend/data/uploads/*
+!backend/data/uploads/.gitkeep
+
+# Claude Code（本地配置和项目说明书，不进仓库）
+.claude/
+CLAUDE.md
+
+# 外周文件（测试/笔记/截图，不进仓库）
+_scratch/

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+langchain-openai
+python-dotenv
+python-multipart
+pdfplumber
+python-docx
+pypdf2
+psycopg2-binary
