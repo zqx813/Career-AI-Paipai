@@ -20,6 +20,11 @@ DB_PATH = os.getenv("DATABASE_PATH", os.path.join(DATA_DIR, 'career_agent.db'))
 # 连接与查询抽象
 # ══════════════════════════════════════════════
 
+def get_connection():
+    """返回数据库连接（公开接口，供脚本调用）"""
+    return _get_conn()
+
+
 def _get_conn():
     """返回数据库连接"""
     if DB_TYPE == "postgresql":
