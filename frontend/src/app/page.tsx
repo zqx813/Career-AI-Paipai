@@ -71,13 +71,14 @@ export default function Home() {
       .then((statusRes) => {
         if (!statusRes) return;
         if (statusRes.ok && statusRes.data) {
-          const inviteVerified = statusRes.data.invite_verified || false;
           setHasChat(statusRes.data.has_chat_summary || false);
           setHasReport(statusRes.data.has_report || false);
           if (statusRes.data.onboarding_complete) {
             setOnboardingStep(null);
           } else {
-            setOnboardingStep("welcome");
+            // 恢复到中断的步骤
+            const step = statusRes.data.onboarding_step;
+            setOnboardingStep(step === "invite" ? "resume" : step);
           }
         }
         setLoading(false);
@@ -109,7 +110,8 @@ export default function Home() {
           if (r.data.onboarding_complete) {
             setOnboardingStep(null);
           } else {
-            setOnboardingStep("welcome");
+            const step = r.data.onboarding_step;
+            setOnboardingStep(step === "invite" ? "resume" : step);
           }
         }
         setLoading(false);
