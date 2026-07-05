@@ -76,9 +76,7 @@ export default function Home() {
           if (statusRes.data.onboarding_complete) {
             setOnboardingStep(null);
           } else {
-            // 恢复到中断的步骤
-            const step = statusRes.data.onboarding_step;
-            setOnboardingStep(step === "invite" ? "resume" : step);
+            setOnboardingStep("welcome");
           }
         }
         setLoading(false);
@@ -110,8 +108,7 @@ export default function Home() {
           if (r.data.onboarding_complete) {
             setOnboardingStep(null);
           } else {
-            const step = r.data.onboarding_step;
-            setOnboardingStep(step === "invite" ? "resume" : step);
+            setOnboardingStep("welcome");
           }
         }
         setLoading(false);
@@ -148,7 +145,11 @@ export default function Home() {
   if (onboardingStep === "welcome") {
     return (
       <WelcomePage
-        onStart={() => setOnboardingStep("resume")}
+        onStart={() => {
+          if (hasChat) setOnboardingStep("report");
+          else if (resume) setOnboardingStep("chat");
+          else setOnboardingStep("resume");
+        }}
         hasResume={!!resume}
         hasChat={hasChat}
         hasReport={hasReport}
