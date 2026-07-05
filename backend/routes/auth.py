@@ -122,4 +122,4 @@ def invite_status(session_id: str):
         return {"ok": True, "data": {"invite_verified": True}}
 
     from database import is_invite_verified
-    return {"ok": True, "data": {"invite_verified": is_invite_verified(session_id)})
+    return {"ok": True, "data": {"invite_verified": is_invite_verified(session_id)}}
