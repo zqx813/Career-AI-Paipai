@@ -69,18 +69,26 @@ def create_custom_code(code: str, role: str = "user"):
 
 
 def list_codes():
-    from database import get_invite_codes
-    codes = get_invite_codes(limit=200)
-    if not codes:
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT ic.code, ic.role, ic.is_used, ic.used_by_session_id, ic.used_at, ic.created_at, u.username
+        FROM invite_codes ic
+        LEFT JOIN sessions s ON ic.used_by_session_id = s.session_id
+        LEFT JOIN users u ON s.user_id = u.id
+        ORDER BY ic.created_at DESC
+        LIMIT 200
+    """).fetchall()
+    conn.close()
+    if not rows:
         print("暂无邀请码")
         return
-    print(f"{'邀请码':<14} {'角色':<12} {'状态':<10} {'绑定 Session':<14} {'使用时间'}")
+    print(f"{'邀请码':<14} {'角色':<12} {'状态':<10} {'绑定用户':<14} {'使用时间'}")
     print("-" * 80)
-    for c in codes:
-        status = "已使用" if c['is_used'] else "可用"
-        session = c['used_by_session_id'][:12] if c['used_by_session_id'] else "-"
-        used_at = c['used_at'] if c['used_at'] else "-"
-        print(f"  {c['code']:<12} {c['role']:<12} {status:<10} {session:<14} {used_at}")
+    for r in rows:
+        status = "已使用" if r['is_used'] else "可用"
+        user = r['username'][:12] if r['username'] else "-"
+        used_at = r['used_at'] if r['used_at'] else "-"
+        print(f"  {r['code']:<12} {r['role']:<12} {status:<10} {user:<14} {used_at}")
 
 
 def revoke_code(code: str):
