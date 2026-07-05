@@ -99,6 +99,8 @@ def init_db():
         try:
             _exec(conn, f"ALTER TABLE sessions ADD COLUMN {col} {col_def}")
         except Exception:
+            if DB_TYPE == "postgresql":
+                conn.rollback()
             pass
 
     _exec(conn, f"""
@@ -125,6 +127,8 @@ def init_db():
     try:
         _exec(conn, "ALTER TABLE invite_codes ADD COLUMN role TEXT DEFAULT 'user'")
     except Exception:
+        if DB_TYPE == "postgresql":
+            conn.rollback()
         pass
 
     _exec(conn, f"""
@@ -153,6 +157,8 @@ def init_db():
         try:
             _exec(conn, f"ALTER TABLE resume_data ADD COLUMN {col} {col_def}")
         except Exception:
+            if DB_TYPE == "postgresql":
+                conn.rollback()
             pass
 
     _exec(conn, f"""
