@@ -20,13 +20,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 load_dotenv()
 
-from database import get_connection, _exec as q
+from database import get_connection, _exec as q, _all
 
 
 def generate_codes(count: int, export_path: str = None) -> list:
     conn = get_connection()
     existing = set(
-        r[0] for r in q(conn, "SELECT code FROM invite_codes").fetchall()
+        r[0] for r in _all(q(conn, "SELECT code FROM invite_codes"))
     )
     new_codes = []
     attempts = 0
@@ -70,14 +70,14 @@ def create_custom_code(code: str, role: str = "user"):
 
 def list_codes():
     conn = get_connection()
-    rows = q(conn, """
+    rows = _all(q(conn, """
         SELECT ic.code, ic.role, ic.is_used, ic.used_by_session_id, ic.used_at, ic.created_at, u.username
         FROM invite_codes ic
         LEFT JOIN sessions s ON ic.used_by_session_id = s.session_id
         LEFT JOIN users u ON s.user_id = u.id
         ORDER BY ic.created_at DESC
         LIMIT 200
-    """).fetchall()
+    """))
     conn.close()
     if not rows:
         print("暂无邀请码")
