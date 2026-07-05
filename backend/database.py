@@ -89,6 +89,8 @@ def init_db():
             invite_verified INTEGER DEFAULT 0
         )
     """)
+    if DB_TYPE == "postgresql":
+        conn.commit()
 
     # 兼容旧表缺少的列
     for col, col_def in [
@@ -101,7 +103,6 @@ def init_db():
         except Exception:
             if DB_TYPE == "postgresql":
                 conn.rollback()
-            pass
 
     _exec(conn, f"""
         CREATE TABLE IF NOT EXISTS users (
@@ -111,6 +112,8 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    if DB_TYPE == "postgresql":
+        conn.commit()
 
     _exec(conn, f"""
         CREATE TABLE IF NOT EXISTS invite_codes (
@@ -123,13 +126,14 @@ def init_db():
             FOREIGN KEY (used_by_session_id) REFERENCES sessions(session_id)
         )
     """)
+    if DB_TYPE == "postgresql":
+        conn.commit()
 
     try:
         _exec(conn, "ALTER TABLE invite_codes ADD COLUMN role TEXT DEFAULT 'user'")
     except Exception:
         if DB_TYPE == "postgresql":
             conn.rollback()
-        pass
 
     _exec(conn, f"""
         CREATE TABLE IF NOT EXISTS resume_data (
@@ -152,6 +156,8 @@ def init_db():
             FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         )
     """)
+    if DB_TYPE == "postgresql":
+        conn.commit()
 
     for col, col_def in [("education_background_json", "TEXT DEFAULT '[]'")]:
         try:
@@ -159,7 +165,6 @@ def init_db():
         except Exception:
             if DB_TYPE == "postgresql":
                 conn.rollback()
-            pass
 
     _exec(conn, f"""
         CREATE TABLE IF NOT EXISTS conversation_threads (
