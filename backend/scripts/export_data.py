@@ -3,7 +3,10 @@
 用法:
   python scripts/export_data.py DEV_ZQX
 """
+import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 if len(sys.argv) < 2:
     print("用法: python scripts/export_data.py <邀请码>")
