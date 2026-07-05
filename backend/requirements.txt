@@ -7,3 +7,5 @@ pdfplumber
 python-docx
 pypdf2
 psycopg2-binary
+bcrypt==4.0.1
+PyJWT==2.8.0

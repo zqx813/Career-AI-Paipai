@@ -36,7 +36,7 @@ export function MemoryView({ sessionId, memories: parentMemories, onUpdate }: Pr
       return;
     }
     setLoading(true);
-    fetchAPI(`/api/memory/get?session_id=${sessionId}`).then((r) => {
+    fetchAPI("/api/memory/get").then((r) => {
       if (r.ok && r.data && Object.values(r.data).some((v) => v)) {
         setMemories(r.data);
         onUpdate(r.data);
@@ -73,7 +73,7 @@ export function MemoryView({ sessionId, memories: parentMemories, onUpdate }: Pr
     setModifying(true);
     const r = await fetchAPI("/api/memory/modify", {
       method: "POST",
-      body: JSON.stringify({ session_id: sessionId, instruction: instruction.trim() }),
+      body: JSON.stringify({ instruction: instruction.trim() }),
     });
     if (r.ok && r.data) {
       setMemories(r.data);
@@ -91,7 +91,7 @@ export function MemoryView({ sessionId, memories: parentMemories, onUpdate }: Pr
   }
 
   async function handleUndo() {
-    const r = await fetchAPI(`/api/memory/undo?session_id=${sessionId}`, { method: "POST" });
+    const r = await fetchAPI("/api/memory/undo", { method: "POST" });
     if (r.ok && r.data) {
       setMemories(r.data);
       onUpdate(r.data);
@@ -104,7 +104,7 @@ export function MemoryView({ sessionId, memories: parentMemories, onUpdate }: Pr
   async function handleReExtract() {
     if (!confirm("将从全部对话历史重新提取记忆，当前记忆将被覆盖。确认？")) return;
     setReExtracting(true);
-    const r = await fetchAPI(`/api/memory/re-extract?session_id=${sessionId}`, { method: "POST" });
+    const r = await fetchAPI("/api/memory/re-extract", { method: "POST" });
     if (r.ok && r.data) {
       setMemories(r.data);
       onUpdate(r.data);
@@ -117,7 +117,7 @@ export function MemoryView({ sessionId, memories: parentMemories, onUpdate }: Pr
 
   async function handleClear() {
     if (!confirm("确定要清空所有记忆吗？")) return;
-    await fetchAPI(`/api/memory/clear?session_id=${sessionId}`, { method: "POST" });
+    await fetchAPI("/api/memory/clear", { method: "POST" });
     setMemories(null);
     onUpdate({} as MemoryData);
   }

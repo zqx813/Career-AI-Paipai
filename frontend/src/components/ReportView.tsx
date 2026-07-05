@@ -28,12 +28,12 @@ export function ReportView({ sessionId, isPreliminary, onEnterMain }: Props) {
 
   useEffect(() => {
     setLoading(true);
-    fetchAPI(`/api/report/list?session_id=${sessionId}`).then((r) => {
+    fetchAPI("/api/report/list").then((r) => {
       if (r.ok && r.data?.length) {
         setReportList(r.data);
         // 加载最新（第一条）
         const latest = r.data[0];
-        fetchAPI(`/api/report/${latest.id}?session_id=${sessionId}`).then((r2) => {
+        fetchAPI(`/api/report/${latest.id}`).then((r2) => {
           if (r2.ok && r2.data) setReport(r2.data);
           setLoading(false);
         });
@@ -49,7 +49,7 @@ export function ReportView({ sessionId, isPreliminary, onEnterMain }: Props) {
     setRoadmapThreadId("");
     setRoadmapChatOpen(false);
     setRoadmapInput("");
-    fetchAPI(`/api/report/${reportId}?session_id=${sessionId}`).then((r) => {
+    fetchAPI(`/api/report/${reportId}`).then((r) => {
       if (r.ok && r.data) setReport(r.data);
       setLoading(false);
     });
@@ -59,8 +59,8 @@ export function ReportView({ sessionId, isPreliminary, onEnterMain }: Props) {
     setRoadmapChatOpen(true);
     if (roadmapMsgs.length === 0) {
       const params = roadmapThreadId
-        ? `session_id=${sessionId}&scenario=roadmap_chat&thread_id=${roadmapThreadId}`
-        : `session_id=${sessionId}&scenario=roadmap_chat`;
+        ? `scenario=roadmap_chat&thread_id=${roadmapThreadId}`
+        : "scenario=roadmap_chat";
       fetchAPI(`/api/conversation/history?${params}`).then((r) => {
         if (r.ok && r.data?.length) {
           setRoadmapMsgs(r.data.map((m: any) => {
@@ -92,7 +92,7 @@ export function ReportView({ sessionId, isPreliminary, onEnterMain }: Props) {
 
     streamChat(
       "/api/conversation/send",
-      { session_id: sessionId, scenario: "roadmap_chat", message: ctxMsg },
+      { scenario: "roadmap_chat", message: ctxMsg },
       (chunk) => {
         setRoadmapMsgs((prev) => {
           const last = prev[prev.length - 1];
@@ -116,7 +116,7 @@ export function ReportView({ sessionId, isPreliminary, onEnterMain }: Props) {
                 { role: "assistant" as const, content: displayContent }];
               fetchAPI("/api/report/sync-roadmap", {
                 method: "PUT",
-                body: JSON.stringify({ session_id: sessionId, messages: msgs, report_id: report?.id }),
+                body: JSON.stringify({ messages: msgs, report_id: report?.id }),
               }).then((r) => {
                 if (r.ok && r.data) {
                   setReport((prev) => prev ? { ...prev, roadmap: r.data } : prev);
@@ -146,7 +146,7 @@ export function ReportView({ sessionId, isPreliminary, onEnterMain }: Props) {
     setError("");
     const r = await fetchAPI("/api/report/generate", {
       method: "POST",
-      body: JSON.stringify({ session_id: sessionId, target_position: targetPosition.trim() }),
+      body: JSON.stringify({ target_position: targetPosition.trim() }),
     });
     if (r.ok && r.data) {
       setReport({ ...r.data, target_position: targetPosition.trim() } as ReportData);
@@ -155,7 +155,7 @@ export function ReportView({ sessionId, isPreliminary, onEnterMain }: Props) {
       setRoadmapInput("");
       setTargetPosition("");
       // 刷新历史列表
-      fetchAPI(`/api/report/list?session_id=${sessionId}`).then((r2) => {
+      fetchAPI("/api/report/list").then((r2) => {
         if (r2.ok) setReportList(r2.data);
       });
     }

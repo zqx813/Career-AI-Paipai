@@ -21,7 +21,7 @@ export function OnboardingChat({ sessionId, onComplete }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchAPI(`/api/conversation/history?session_id=${sessionId}&scenario=onboarding`).then((r) => {
+    fetchAPI(`/api/conversation/history?scenario=onboarding`).then((r) => {
       if (r.ok && r.data?.length > 0) {
         setMessages(r.data);
         setInitialLoading(false);
@@ -30,12 +30,12 @@ export function OnboardingChat({ sessionId, onComplete }: Props) {
         if (lastAi?.content?.includes("[ONBOARDING_COMPLETE]")) {
           setShowButtons(true);
           // 已有报告的用户回来，检查是否已有报告 → 禁用"继续聊聊"
-          fetchAPI(`/api/report/list?session_id=${sessionId}`).then((r2) => {
+          fetchAPI(`/api/report/list`).then((r2) => {
             if (r2.ok && r2.data?.length > 0) setHasReport(true);
           });
         }
       } else {
-        fetchAPI(`/api/onboarding/start?session_id=${sessionId}`).then((r2) => {
+        fetchAPI(`/api/onboarding/start`).then((r2) => {
           if (r2.ok) {
             setMessages([{ role: "assistant", content: r2.data.content }]);
           }
@@ -59,7 +59,7 @@ export function OnboardingChat({ sessionId, onComplete }: Props) {
     let fullText = "";
     streamChat(
       "/api/onboarding/chat",
-      { session_id: sessionId, message: userMsg },
+      {message: userMsg },
       (chunk) => {
         fullText += chunk;
         setMessages((prev) => {
@@ -96,7 +96,7 @@ export function OnboardingChat({ sessionId, onComplete }: Props) {
     let fullText = "";
     streamChat(
       "/api/onboarding/chat",
-      { session_id: sessionId, message: "[用户选择了继续聊聊。请回复：好的，我们继续吧～如果有需要补充的也可以直接说；觉得聊够了可以输入\"显示按钮\"来唤出下一步选项。]" },
+      {message: "[用户选择了继续聊聊。请回复：好的，我们继续吧～如果有需要补充的也可以直接说；觉得聊够了可以输入\"显示按钮\"来唤出下一步选项。]" },
       (chunk) => {
         fullText += chunk;
         setMessages((prev) => {

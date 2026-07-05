@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { generateSessionId, fetchAPI } from "@/lib/api";
+import { fetchAPI, getStoredSessionId, setStoredSessionId, clearToken, getToken, meAPI } from "@/lib/api";
+import { LoginPage } from "@/components/LoginPage";
+import { RegisterPage } from "@/components/RegisterPage";
 import { Sidebar } from "@/components/Sidebar";
 import { WelcomePage } from "@/components/WelcomePage";
 import { ResumeUpload } from "@/components/ResumeUpload";
@@ -11,7 +13,6 @@ import { ChatWindow } from "@/components/ChatWindow";
 import { MemoryView } from "@/components/MemoryView";
 import { ResumeEdit } from "@/components/ResumeEdit";
 import { OnboardingGuide } from "@/components/OnboardingGuide";
-import { InviteCodePage } from "@/components/InviteCodePage";
 import type { ResumeData, MemoryData, ReportData } from "@/lib/types";
 
 export default function Home() {
@@ -24,62 +25,97 @@ export default function Home() {
   const [hasChat, setHasChat] = useState(false);
   const [hasReport, setHasReport] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [inviteVerified, setInviteVerified] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [showGuide, setShowGuide] = useState(false);
   const prevStep = useRef<string | null>(null);
 
   // 每次进入 onboarding 步骤时上报
   useEffect(() => {
     if (!sessionId || !onboardingStep) return;
-    fetchAPI(`/api/onboarding/set-step?session_id=${sessionId}&step=${onboardingStep}`, { method: "POST" });
+    fetchAPI(`/api/onboarding/set-step?step=${onboardingStep}`, { method: "POST" });
   }, [sessionId, onboardingStep]);
 
   // 进入常规界面时标记完成 + 首次进入触发浮窗引导
   useEffect(() => {
     if (!sessionId || onboardingStep !== null || loading) return;
-    fetchAPI(`/api/onboarding/complete?session_id=${sessionId}`, { method: "POST" });
-    // 首次从 onboarding 进入常规界面时显示引导
+    fetchAPI("/api/onboarding/complete", { method: "POST" });
     if (prevStep.current !== null && !localStorage.getItem("guide_done")) {
       setShowGuide(true);
     }
   }, [sessionId, onboardingStep, loading]);
 
-  // 追踪上次步骤
   useEffect(() => {
     prevStep.current = onboardingStep;
   }, [onboardingStep]);
 
+  // 认证检查
   useEffect(() => {
-    const sid = generateSessionId();
-    setSessionId(sid);
-    fetchAPI(`/api/onboarding/status?session_id=${sid}`)
+    const token = getToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    meAPI()
       .then((r) => {
-        const inviteVerified = r.data?.invite_verified || false;
-        setInviteVerified(inviteVerified);
-        setHasChat(r.data?.has_chat_summary || false);
-        setHasReport(r.data?.has_report || false);
-        if (r.ok && r.data?.onboarding_complete) {
-          setOnboardingStep(inviteVerified ? null : "invite");
+        if (r.ok) {
+          const sid = getStoredSessionId();
+          setSessionId(sid);
+          // 检查 onboarding 状态
+          return fetchAPI("/api/onboarding/status");
         } else {
-          setOnboardingStep("welcome");
+          clearToken();
+          setLoading(false);
+          return null;
+        }
+      })
+      .then((statusRes) => {
+        if (!statusRes) return;
+        if (statusRes.ok && statusRes.data) {
+          const inviteVerified = statusRes.data.invite_verified || false;
+          setHasChat(statusRes.data.has_chat_summary || false);
+          setHasReport(statusRes.data.has_report || false);
+          if (statusRes.data.onboarding_complete) {
+            setOnboardingStep(null);
+          } else {
+            setOnboardingStep("welcome");
+          }
         }
         setLoading(false);
       })
       .catch(() => {
-        setOnboardingStep("welcome");
+        clearToken();
         setLoading(false);
       });
   }, []);
 
   useEffect(() => {
     if (!sessionId) return;
-    fetchAPI(`/api/resume/get?session_id=${sessionId}`).then((r) => {
+    fetchAPI("/api/resume/get").then((r) => {
       if (r.ok && r.data) setResume(r.data);
     });
-    fetchAPI(`/api/memory/get?session_id=${sessionId}`).then((r) => {
+    fetchAPI("/api/memory/get").then((r) => {
       if (r.ok && r.data) setMemories(r.data);
     });
   }, [sessionId, onboardingStep]);
+
+  function handleLogin(sid: string) {
+    setSessionId(sid);
+    // 登录后重新检查 onboarding 状态
+    fetchAPI("/api/onboarding/status")
+      .then((r) => {
+        if (r.ok && r.data) {
+          setHasChat(r.data.has_chat_summary || false);
+          setHasReport(r.data.has_report || false);
+          if (r.data.onboarding_complete) {
+            setOnboardingStep(null);
+          } else {
+            setOnboardingStep("welcome");
+          }
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }
 
   if (loading) {
     return (
@@ -89,19 +125,34 @@ export default function Home() {
     );
   }
 
-  if (onboardingStep === "welcome") {
+  // 未登录 → 显示登录/注册页
+  if (!sessionId) {
+    if (authMode === "register") {
+      return (
+        <RegisterPage
+          onLogin={handleLogin}
+          onSwitchToLogin={() => setAuthMode("login")}
+        />
+      );
+    }
     return (
-      <WelcomePage
-        onStart={() => setOnboardingStep(inviteVerified ? "resume" : "invite")}
-        hasResume={!!resume}
-        hasChat={hasChat}
-        hasReport={hasReport}
-        inviteVerified={inviteVerified}
+      <LoginPage
+        onLogin={handleLogin}
+        onSwitchToRegister={() => setAuthMode("register")}
       />
     );
   }
-  if (onboardingStep === "invite") {
-    return <InviteCodePage sessionId={sessionId} onVerified={() => setOnboardingStep("resume")} />;
+
+  if (onboardingStep === "welcome") {
+    return (
+      <WelcomePage
+        onStart={() => setOnboardingStep("resume")}
+        hasResume={!!resume}
+        hasChat={hasChat}
+        hasReport={hasReport}
+        inviteVerified={true}
+      />
+    );
   }
   if (onboardingStep === "resume") {
     return <ResumeUpload sessionId={sessionId} onDone={(data) => { setResume(data); setOnboardingStep("chat"); }} />;

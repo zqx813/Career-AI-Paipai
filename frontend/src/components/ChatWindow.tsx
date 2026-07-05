@@ -45,7 +45,7 @@ export function ChatWindow({ sessionId, scenario, resume }: Props) {
 
   // 加载线程列表，恢复上次活跃线程
   useEffect(() => {
-    fetchAPI(`/api/conversation/threads?session_id=${sessionId}&scenario=${scenario}`)
+    fetchAPI(`/api/conversation/threads?scenario=${scenario}`)
       .then((r) => {
         if (r.ok && r.data?.length) {
           setThreads(r.data);
@@ -69,7 +69,7 @@ export function ChatWindow({ sessionId, scenario, resume }: Props) {
     }
     const lastKey = `last_thread_${sessionId}_${scenario}`;
     localStorage.setItem(lastKey, currentThreadId);
-    fetchAPI(`/api/conversation/history?session_id=${sessionId}&scenario=${scenario}&thread_id=${currentThreadId}`)
+    fetchAPI(`/api/conversation/history?scenario=${scenario}&thread_id=${currentThreadId}`)
       .then((r) => { if (r.ok) setMessages(r.data || []); });
   }, [sessionId, scenario, currentThreadId]);
 
@@ -87,7 +87,6 @@ export function ChatWindow({ sessionId, scenario, resume }: Props) {
     streamChat(
       "/api/conversation/send",
       {
-        session_id: sessionId,
         scenario,
         message: userMsg,
         thread_id: currentThreadId === NEW_THREAD ? undefined : currentThreadId,
@@ -112,7 +111,7 @@ export function ChatWindow({ sessionId, scenario, resume }: Props) {
         // 新线程：更新 threadId + 刷新线程列表
         if (extra?.thread_id && currentThreadId === NEW_THREAD) {
           setCurrentThreadId(extra.thread_id);
-          const refresh = () => fetchAPI(`/api/conversation/threads?session_id=${sessionId}&scenario=${scenario}`)
+          const refresh = () => fetchAPI(`/api/conversation/threads?scenario=${scenario}`)
             .then((r) => { if (r.ok) setThreads(r.data); });
           refresh();
           // 标题在 done 之后异步生成，延迟再拉一次

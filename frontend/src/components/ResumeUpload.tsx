@@ -20,7 +20,7 @@ export function ResumeUpload({ sessionId, onDone }: Props) {
 
   // 检查是否已有简历（中断恢复）
   useEffect(() => {
-    fetchAPI(`/api/resume/get?session_id=${sessionId}`).then((r) => {
+    fetchAPI("/api/resume/get").then((r) => {
       if (r.ok && r.data) {
         setData(r.data);
         setStep("review");
@@ -35,10 +35,11 @@ export function ResumeUpload({ sessionId, onDone }: Props) {
     setError("");
     const form = new FormData();
     form.append("file", file);
-    form.append("session_id", sessionId);
+    const token = localStorage.getItem("auth_token");
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/resume/upload`, {
         method: "POST",
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: form,
       });
       const json = await res.json();
@@ -59,7 +60,7 @@ export function ResumeUpload({ sessionId, onDone }: Props) {
     if (!data) return;
     await fetchAPI("/api/resume/update", {
       method: "POST",
-      body: JSON.stringify({ session_id: sessionId, ...data, confirmed: true }),
+      body: JSON.stringify({ ...data, confirmed: true }),
     });
     setStep("done");
   }

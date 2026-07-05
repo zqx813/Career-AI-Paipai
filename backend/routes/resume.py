@@ -1,8 +1,9 @@
 """简历相关路由"""
 import os
 from typing import Optional
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, Depends
 from pydantic import BaseModel
+from auth_deps import get_current_session_id
 
 router = APIRouter()
 
@@ -11,7 +12,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 class ResumeEdit(BaseModel):
-    session_id: str
     name: Optional[str] = ""
     education_background: Optional[list] = []
     skills: Optional[list] = []
@@ -67,7 +67,7 @@ def _extract_text(file_bytes: bytes, filename: str) -> str:
 
 
 @router.post("/upload")
-async def upload_resume(session_id: str = Form(...), file: UploadFile = File(...)):
+async def upload_resume(file: UploadFile = File(...), session_id: str = Depends(get_current_session_id)):
     """上传简历并解析"""
     from database import save_resume
     from llm_service import parse_resume
@@ -88,7 +88,7 @@ async def upload_resume(session_id: str = Form(...), file: UploadFile = File(...
 
 
 @router.get("/get")
-def get_resume(session_id: str):
+def get_resume(session_id: str = Depends(get_current_session_id)):
     """获取已保存的简历"""
     from database import get_resume as db_get
     try:
@@ -100,12 +100,12 @@ def get_resume(session_id: str):
 
 
 @router.post("/update")
-def update_resume(data: ResumeEdit):
+def update_resume(data: ResumeEdit, session_id: str = Depends(get_current_session_id)):
     """手动更新简历字段"""
     from database import save_resume
     from database import get_resume as db_get
     try:
-        existing = db_get(data.session_id) or {}
+        existing = db_get(session_id) or {}
         merged = {
             **existing,
             'name': data.name or existing.get('name', ''),
@@ -118,7 +118,7 @@ def update_resume(data: ResumeEdit):
             'internships': data.internships or existing.get('internships', []),
             'confirmed': True,
         }
-        save_resume(data.session_id, merged)
+        save_resume(session_id, merged)
         return {"ok": True, "data": merged}
     except Exception as e:
         print(f"更新简历失败: {e}")

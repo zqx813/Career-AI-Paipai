@@ -1,32 +1,31 @@
 """分析报告相关路由"""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List
+from auth_deps import get_current_session_id
 
 router = APIRouter()
 
 
 class ReportRequest(BaseModel):
-    session_id: str
     target_position: str
 
 
 class SyncRoadmapRequest(BaseModel):
-    session_id: str
     messages: List[dict]
     report_id: int | None = None  # 指定报告 ID，不传则更新最新
 
 
 @router.post("/generate")
-def generate_report(req: ReportRequest):
+def generate_report(req: ReportRequest, session_id: str = Depends(get_current_session_id)):
     """生成分析报告"""
     from database import get_resume, get_memories, save_report
     from llm_service import generate_report as gen
     import json, os
 
     try:
-        resume = get_resume(req.session_id)
-        memories = get_memories(req.session_id)
+        resume = get_resume(session_id)
+        memories = get_memories(session_id)
 
         # 加载预置信息库
         info_base = {}
@@ -38,7 +37,7 @@ def generate_report(req: ReportRequest):
 
         result = gen(resume, memories, req.target_position, info_base)
         if result:
-            save_report(req.session_id, req.target_position,
+            save_report(session_id, req.target_position,
                         result.get('match_score', 0),
                         result.get('skill_gaps', []),
                         result.get('recommended_directions', []),
@@ -51,7 +50,7 @@ def generate_report(req: ReportRequest):
 
 
 @router.get("/list")
-def list_reports(session_id: str):
+def list_reports(session_id: str = Depends(get_current_session_id)):
     """获取历史报告列表"""
     from database import get_reports
     try:
@@ -62,7 +61,7 @@ def list_reports(session_id: str):
 
 
 @router.get("/latest")
-def latest_report(session_id: str):
+def latest_report(session_id: str = Depends(get_current_session_id)):
     """获取最新报告"""
     from database import get_latest_report
     try:
@@ -73,7 +72,7 @@ def latest_report(session_id: str):
 
 
 @router.get("/{report_id}")
-def get_report(report_id: int, session_id: str):
+def get_report(report_id: int, session_id: str = Depends(get_current_session_id)):
     """按 ID 获取单条报告"""
     from database import get_report_by_id
     try:
@@ -85,7 +84,7 @@ def get_report(report_id: int, session_id: str):
 
 
 @router.put("/sync-roadmap")
-def sync_roadmap(req: SyncRoadmapRequest):
+def sync_roadmap(req: SyncRoadmapRequest, session_id: str = Depends(get_current_session_id)):
     """从路线图对话中提取修改后的 roadmap 并持久化"""
     from database import get_latest_report, get_report_by_id, update_report_roadmap
     from llm_service import _get_llm, _invoke_with_retry, _parse_json_response
@@ -93,9 +92,9 @@ def sync_roadmap(req: SyncRoadmapRequest):
     import json
 
     if req.report_id:
-        report = get_report_by_id(req.session_id, req.report_id)
+        report = get_report_by_id(session_id, req.report_id)
     else:
-        report = get_latest_report(req.session_id)
+        report = get_latest_report(session_id)
     if not report:
         return {"ok": False, "error": "没有找到报告"}
 
@@ -128,7 +127,7 @@ def sync_roadmap(req: SyncRoadmapRequest):
             SystemMessage(content=prompt.format(current=current_roadmap, conversation=conversation)),
         ]).content
         updated = _parse_json_response(response)
-        update_report_roadmap(req.session_id, report['id'], updated)
+        update_report_roadmap(session_id, report['id'], updated)
         return {"ok": True, "data": updated}
     except Exception as e:
         print(f"路线图同步失败: {e}")

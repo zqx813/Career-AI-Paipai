@@ -18,7 +18,7 @@ export function ResumeEdit({ sessionId, resume, onUpdate }: Props) {
   useEffect(() => {
     if (resume) return;
     // 没有简历时尝试加载（中断恢复场景，ResumeUpload 上传后这里可能还没数据）
-    fetchAPI(`/api/resume/get?session_id=${sessionId}`).then((r) => {
+    fetchAPI("/api/resume/get").then((r) => {
       if (r.ok && r.data) onUpdate(r.data);
     });
   }, [sessionId]);
@@ -27,11 +27,11 @@ export function ResumeEdit({ sessionId, resume, onUpdate }: Props) {
     setUploading(true);
     const form = new FormData();
     form.append("file", file);
-    form.append("session_id", sessionId);
+    const token = localStorage.getItem("auth_token");
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/resume/upload`,
-        { method: "POST", body: form }
+        { method: "POST", headers: token ? { 'Authorization': `Bearer ${token}` } : {}, body: form }
       );
       const json = await res.json();
       if (json.ok && json.data) {

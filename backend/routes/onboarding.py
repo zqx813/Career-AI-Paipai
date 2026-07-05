@@ -2,29 +2,29 @@
 import json
 import os
 import threading
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from auth_deps import get_current_session_id
 
 router = APIRouter()
 
 
 class OnboardingChatRequest(BaseModel):
-    session_id: str
     message: str
 
 
 @router.post("/chat")
-def onboarding_chat(req: OnboardingChatRequest):
+def onboarding_chat(req: OnboardingChatRequest, session_id: str = Depends(get_current_session_id)):
     """Onboarding 对话，流式返回"""
     from database import get_resume, get_conversation_history, save_message
     from llm_service import chat_stream
 
-    resume = get_resume(req.session_id)
-    history = get_conversation_history(req.session_id, "onboarding")
+    resume = get_resume(session_id)
+    history = get_conversation_history(session_id, "onboarding")
 
     # 保存用户消息
-    save_message(req.session_id, "onboarding", "user", req.message)
+    save_message(session_id, "onboarding", "user", req.message)
 
     full_response = ""
 
@@ -35,7 +35,7 @@ def onboarding_chat(req: OnboardingChatRequest):
                 full_response += chunk
                 yield f"data: {json.dumps({'chunk': chunk})}\n\n"
 
-            save_message(req.session_id, "onboarding", "assistant", full_response)
+            save_message(session_id, "onboarding", "assistant", full_response)
 
             # 背景提取 AI 记忆，不阻塞 done 事件发送
             if "[ONBOARDING_COMPLETE]" in full_response:
@@ -43,10 +43,10 @@ def onboarding_chat(req: OnboardingChatRequest):
                     try:
                         from database import get_all_messages, upsert_memories
                         from llm_service import extract_memories
-                        all_msgs = get_all_messages(req.session_id)
+                        all_msgs = get_all_messages(session_id)
                         extracted = extract_memories(all_msgs)
                         if extracted and any(v for v in extracted.values() if v):
-                            upsert_memories(req.session_id, extracted)
+                            upsert_memories(session_id, extracted)
                     except Exception as e:
                         print(f"记忆提取失败: {e}")
                 threading.Thread(target=extract_bg, daemon=True).start()
@@ -60,7 +60,7 @@ def onboarding_chat(req: OnboardingChatRequest):
 
 
 @router.get("/start")
-def start_onboarding(session_id: str):
+def start_onboarding(session_id: str = Depends(get_current_session_id)):
     """Onboarding AI 主动发起第一条消息（幂等，已有消息则返回历史）"""
     from database import (get_resume as db_get_resume, get_conversation_history,
                            save_message, create_session, update_session_active)
@@ -93,7 +93,7 @@ def start_onboarding(session_id: str):
 
 
 @router.post("/complete")
-def complete_onboarding_route(session_id: str):
+def complete_onboarding_route(session_id: str = Depends(get_current_session_id)):
     """标记 onboarding 完成 + 提取首次 AI 记忆"""
     from database import complete_onboarding, get_all_messages, upsert_memories
     from llm_service import extract_memories
@@ -111,7 +111,7 @@ def complete_onboarding_route(session_id: str):
 
 
 @router.get("/status")
-def onboarding_status(session_id: str):
+def onboarding_status(session_id: str = Depends(get_current_session_id)):
     """检查 onboarding 状态：是否完成 + 当前步骤 + 各阶段标记"""
     from database import is_onboarding_complete, get_onboarding_step, has_onboarding_summary, has_any_report, is_invite_verified
     invite_verified = True if os.getenv("REQUIRE_INVITE", "true").lower() == "false" else is_invite_verified(session_id)
@@ -125,7 +125,7 @@ def onboarding_status(session_id: str):
 
 
 @router.post("/set-step")
-def set_onboarding_step(session_id: str, step: str):
+def set_onboarding_step(step: str, session_id: str = Depends(get_current_session_id)):
     """更新 onboarding 步骤"""
     from database import update_onboarding_step
     update_onboarding_step(session_id, step)

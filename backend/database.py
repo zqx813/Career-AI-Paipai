@@ -94,11 +94,21 @@ def init_db():
     for col, col_def in [
         ("onboarding_step", "TEXT DEFAULT 'welcome'"),
         ("invite_verified", "INTEGER DEFAULT 0"),
+        ("user_id", "INTEGER"),
     ]:
         try:
             _exec(conn, f"ALTER TABLE sessions ADD COLUMN {col} {col_def}")
         except Exception:
             pass
+
+    _exec(conn, f"""
+        CREATE TABLE IF NOT EXISTS users (
+            id {pk},
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
 
     _exec(conn, f"""
         CREATE TABLE IF NOT EXISTS invite_codes (
@@ -288,6 +298,53 @@ def get_onboarding_step(session_id: str) -> str:
                      (session_id,)))
     conn.close()
     return row['onboarding_step'] if row else 'welcome'
+
+
+# ══════════════════════════════════════════════
+# User
+# ══════════════════════════════════════════════
+
+def create_user(username: str, password_hash: str) -> int:
+    conn = _get_conn()
+    cur = _exec(conn,
+        "INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, password_hash))
+    conn.commit()
+    user_id = cur.lastrowid
+    conn.close()
+    return user_id
+
+
+def get_user_by_username(username: str) -> Optional[dict]:
+    conn = _get_conn()
+    row = _one(_exec(conn, "SELECT id, username, password_hash FROM users WHERE username=?", (username,)))
+    conn.close()
+    return row
+
+
+def get_session_for_user(user_id: int) -> str:
+    """返回用户唯一的 session_id，不存在则创建"""
+    conn = _get_conn()
+    row = _one(_exec(conn, "SELECT session_id FROM sessions WHERE user_id=? ORDER BY last_active DESC LIMIT 1", (user_id,)))
+    if row:
+        session_id = row['session_id']
+        conn.close()
+        return session_id
+    # 创建新 session
+    session_id = str(uuid.uuid4())[:8]
+    now = datetime.now()
+    _exec(conn,
+        "INSERT INTO sessions (session_id, user_id, created_at, last_active) VALUES (?,?,?,?)",
+        (session_id, user_id, now, now))
+    conn.commit()
+    conn.close()
+    return session_id
+
+
+def link_session_to_user(session_id: str, user_id: int):
+    conn = _get_conn()
+    _exec(conn, "UPDATE sessions SET user_id=? WHERE session_id=?", (user_id, session_id))
+    conn.commit()
+    conn.close()
 
 
 # ══════════════════════════════════════════════
