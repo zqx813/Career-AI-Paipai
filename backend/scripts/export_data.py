@@ -14,10 +14,10 @@ if len(sys.argv) < 2:
 
 code = sys.argv[1]
 
-from database import get_connection
+from database import get_connection, _exec as q
 conn = get_connection()
 
-row = conn.execute("SELECT used_by_session_id, used_at FROM invite_codes WHERE code=?", (code,)).fetchone()
+row = q(conn,"SELECT used_by_session_id, used_at FROM invite_codes WHERE code=?", (code,)).fetchone()
 if not row or not row['used_by_session_id']:
     print(f'邀请码 {code} 未被使用或不存在')
     conn.close()
@@ -28,7 +28,7 @@ print(f'Session ID: {sid}')
 print(f'使用时间: {row["used_at"]}')
 print()
 
-r = conn.execute('SELECT name, education, major, skills_json, work_years, raw_text FROM resume_data WHERE session_id=?', (sid,)).fetchone()
+r = q(conn,'SELECT name, education, major, skills_json, work_years, raw_text FROM resume_data WHERE session_id=?', (sid,)).fetchone()
 if r:
     print('=== 简历 ===')
     print(f'姓名: {r["name"]}')
@@ -39,7 +39,7 @@ if r:
     print(f'原文前500字: {raw}')
     print()
 
-m = conn.execute('SELECT * FROM ai_memories WHERE session_id=?', (sid,)).fetchone()
+m = q(conn,'SELECT * FROM ai_memories WHERE session_id=?', (sid,)).fetchone()
 if m:
     print('=== AI 记忆 ===')
     for k in ['career_interests','skills_self_assessment','values_field','current_stage','target_position','concerns','free_notes']:
@@ -47,7 +47,7 @@ if m:
             print(f'{k}: {m[k]}')
     print()
 
-msgs = conn.execute('SELECT role, content, created_at FROM ai_conversations WHERE session_id=? ORDER BY id ASC', (sid,)).fetchall()
+msgs = q(conn,'SELECT role, content, created_at FROM ai_conversations WHERE session_id=? ORDER BY id ASC', (sid,)).fetchall()
 if msgs:
     print(f'=== 对话记录 ({len(msgs)} 条) ===')
     for msg in msgs:
@@ -57,7 +57,7 @@ if msgs:
         print(f'[{role}] {content}')
         print()
 
-reps = conn.execute('SELECT target_position, match_score, skill_gaps_json, recommended_directions_json, created_at FROM analysis_reports WHERE session_id=? ORDER BY id ASC', (sid,)).fetchall()
+reps = q(conn,'SELECT target_position, match_score, skill_gaps_json, recommended_directions_json, created_at FROM analysis_reports WHERE session_id=? ORDER BY id ASC', (sid,)).fetchall()
 if reps:
     print(f'=== 分析报告 ({len(reps)} 条) ===')
     for rep in reps:

@@ -20,13 +20,13 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 load_dotenv()
 
-from database import get_connection
+from database import get_connection, _exec as q
 
 
 def generate_codes(count: int, export_path: str = None) -> list:
     conn = get_connection()
     existing = set(
-        r[0] for r in conn.execute("SELECT code FROM invite_codes").fetchall()
+        r[0] for r in q(conn, "SELECT code FROM invite_codes").fetchall()
     )
     new_codes = []
     attempts = 0
@@ -39,7 +39,7 @@ def generate_codes(count: int, export_path: str = None) -> list:
         new_codes.append(code)
 
     for code in new_codes:
-        conn.execute("INSERT INTO invite_codes (code) VALUES (?)", (code,))
+        q(conn, "INSERT INTO invite_codes (code) VALUES (?)", (code,))
     conn.commit()
     conn.close()
 
@@ -53,14 +53,14 @@ def generate_codes(count: int, export_path: str = None) -> list:
 
 def create_custom_code(code: str, role: str = "user"):
     conn = get_connection()
-    existing = conn.execute(
+    existing = q(conn,
         "SELECT code FROM invite_codes WHERE code=?", (code,)
     ).fetchone()
     if existing:
         conn.close()
         print(f"错误：邀请码 '{code}' 已存在")
         return False
-    conn.execute(
+    q(conn,
         "INSERT INTO invite_codes (code, role) VALUES (?, ?)", (code, role))
     conn.commit()
     conn.close()
@@ -70,7 +70,7 @@ def create_custom_code(code: str, role: str = "user"):
 
 def list_codes():
     conn = get_connection()
-    rows = conn.execute("""
+    rows = q(conn, """
         SELECT ic.code, ic.role, ic.is_used, ic.used_by_session_id, ic.used_at, ic.created_at, u.username
         FROM invite_codes ic
         LEFT JOIN sessions s ON ic.used_by_session_id = s.session_id
@@ -94,7 +94,7 @@ def list_codes():
 def revoke_code(code: str):
     """删除（废除）指定邀请码，不影响已绑定用户"""
     conn = get_connection()
-    cur = conn.execute("DELETE FROM invite_codes WHERE code=?", (code,))
+    cur = q(conn, "DELETE FROM invite_codes WHERE code=?", (code,))
     conn.commit()
     deleted = cur.rowcount
     conn.close()
@@ -107,7 +107,7 @@ def revoke_code(code: str):
 def ban_code(code: str):
     """删除邀请码，同时踢掉已绑定用户（重置 invite_verified）"""
     conn = get_connection()
-    row = conn.execute(
+    row = q(conn,
         "SELECT used_by_session_id FROM invite_codes WHERE code=?", (code,)
     ).fetchone()
     if not row:
@@ -115,9 +115,9 @@ def ban_code(code: str):
         print(f"未找到邀请码: {code}")
         return
     sid = row['used_by_session_id']
-    conn.execute("DELETE FROM invite_codes WHERE code=?", (code,))
+    q(conn, "DELETE FROM invite_codes WHERE code=?", (code,))
     if sid:
-        conn.execute(
+        q(conn,
             "UPDATE sessions SET invite_verified=0 WHERE session_id=?", (sid,))
         conn.commit()
         conn.close()
