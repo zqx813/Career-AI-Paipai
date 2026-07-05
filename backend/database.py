@@ -806,6 +806,3 @@ EXTRACTION_THRESHOLD = 10
 def should_extract_memories(session_id: str) -> bool:
     new_count, _, _ = get_new_message_stats(session_id)
     return new_count >= EXTRACTION_THRESHOLD
-
-
-init_db()

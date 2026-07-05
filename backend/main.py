@@ -13,6 +13,12 @@ from routes import resume, conversation, memory, report, onboarding, auth
 
 app = FastAPI(title="生涯AI原型", version="0.1.0")
 
+
+@app.on_event("startup")
+def startup():
+    from database import init_db
+    init_db()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(","),
