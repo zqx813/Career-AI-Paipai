@@ -5,9 +5,10 @@ interface Props {
   hasResume?: boolean;
   hasChat?: boolean;
   hasReport?: boolean;
+  inviteVerified?: boolean;
 }
 
-export function WelcomePage({ onStart, hasResume, hasChat, hasReport }: Props) {
+export function WelcomePage({ onStart, hasResume, hasChat, hasReport, inviteVerified }: Props) {
   return (
     <div className="min-h-screen bg-[#F5F3EF] flex items-center justify-center">
       <div className="text-center max-w-lg px-8">
@@ -22,7 +23,12 @@ export function WelcomePage({ onStart, hasResume, hasChat, hasReport }: Props) {
         <p className="text-lg text-[#666] mb-2">
           我是<span className="text-[#8B7355] font-semibold">派派</span>，你的生涯助手
         </p>
-        {!hasResume && (
+        {!hasResume && !inviteVerified && (
+          <p className="text-base text-[#666] leading-relaxed mb-10">
+            我是派派，你的生涯助手。请先使用邀请码验证身份，然后上传简历，我会为你生成专属的生涯分析报告。
+          </p>
+        )}
+        {!hasResume && inviteVerified && (
           <p className="text-base text-[#666] leading-relaxed mb-10">
             上传你的简历，我会先简单和你聊几句，然后生成你的专属生涯分析报告。
             整个过程大约 5-10 分钟。
@@ -39,7 +45,7 @@ export function WelcomePage({ onStart, hasResume, hasChat, hasReport }: Props) {
           onClick={onStart}
           className="px-10 py-4 bg-[#8B7355] text-white text-lg rounded-xl hover:bg-[#6B5335] transition-colors shadow-md"
         >
-          {hasResume ? "继续" : "上传简历"}
+          {hasResume ? "继续" : (inviteVerified ? "上传简历" : "开始")}
         </button>
         <p className="mt-6 text-sm text-[#999]">
           需要邀请码才能使用，简历仅用于分析

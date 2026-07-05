@@ -17,12 +17,14 @@ export function OnboardingChat({ sessionId, onComplete }: Props) {
   const [showButtons, setShowButtons] = useState(false);
   const [hasReport, setHasReport] = useState(false); // 已有报告 → 禁用"继续聊聊"
   const [awaitingConfirm, setAwaitingConfirm] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchAPI(`/api/conversation/history?session_id=${sessionId}&scenario=onboarding`).then((r) => {
       if (r.ok && r.data?.length > 0) {
         setMessages(r.data);
+        setInitialLoading(false);
         // 保持器：最后一条 AI 消息含 [ONBOARDING_COMPLETE] → 恢复按钮
         const lastAi = [...r.data].reverse().find((m: any) => m.role === "assistant");
         if (lastAi?.content?.includes("[ONBOARDING_COMPLETE]")) {
@@ -37,7 +39,8 @@ export function OnboardingChat({ sessionId, onComplete }: Props) {
           if (r2.ok) {
             setMessages([{ role: "assistant", content: r2.data.content }]);
           }
-        });
+          setInitialLoading(false);
+        }).catch(() => setInitialLoading(false));
       }
     });
   }, [sessionId]);
@@ -141,26 +144,33 @@ export function OnboardingChat({ sessionId, onComplete }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4 max-w-2xl mx-auto w-full">
-        {displayMessages.map((msg, i) => (
-          <div
-            key={i}
-            className={`mb-4 ${msg.role === "user" ? "text-right" : "text-left"}`}
-          >
-            <div
-              className={`inline-block max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed text-left ${
-                msg.role === "user"
-                  ? "bg-[#E8E4E0] text-[#2C2C2C]"
-                  : "bg-[#D4A574] text-white"
-              }`}
-            >
-              {msg.role === "assistant-streaming" ? (
-                <span className="whitespace-pre-wrap">{msg.content}</span>
-              ) : (
-                <MarkdownContent content={msg.content} variant={msg.role === "user" ? "light" : "dark"} />
-              )}
-            </div>
+        {initialLoading ? (
+          <div className="flex flex-col items-center justify-center h-full gap-4">
+            <Loader2 size={32} className="animate-spin text-[#D4A574]" />
+            <p className="text-[#999] text-sm">派派正在准备中，请稍等片刻~</p>
           </div>
-        ))}
+        ) : (
+          displayMessages.map((msg, i) => (
+            <div
+              key={i}
+              className={`mb-4 ${msg.role === "user" ? "text-right" : "text-left"}`}
+            >
+              <div
+                className={`inline-block max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed text-left ${
+                  msg.role === "user"
+                    ? "bg-[#E8E4E0] text-[#2C2C2C]"
+                    : "bg-[#D4A574] text-white"
+                }`}
+              >
+                {msg.role === "assistant-streaming" ? (
+                  <span className="whitespace-pre-wrap">{msg.content}</span>
+                ) : (
+                  <MarkdownContent content={msg.content} variant={msg.role === "user" ? "light" : "dark"} />
+                )}
+              </div>
+            </div>
+          ))
+        )}
         <div ref={bottomRef} />
       </div>
 
@@ -198,17 +208,17 @@ export function OnboardingChat({ sessionId, onComplete }: Props) {
                 handleSend();
               }
             }}
-            disabled={streaming || showButtons}
+            disabled={streaming || showButtons || initialLoading}
             rows={1}
             className="flex-1 px-4 py-3 border border-[#E8E4E0] rounded-xl focus:outline-none focus:border-[#D4A574] text-sm bg-[#F5F3EF] disabled:opacity-50 resize-none"
-            placeholder={showButtons ? "请点击上方按钮选择" : "输入你的想法...（Enter 发送，Shift+Enter 换行）"}
+            placeholder={initialLoading ? "派派正在准备中，请稍等片刻~" : showButtons ? "请点击上方按钮选择" : "输入你的想法...（Enter 发送，Shift+Enter 换行）"}
           />
           <button
             onClick={handleSend}
-            disabled={streaming || showButtons || !input.trim()}
+            disabled={streaming || showButtons || initialLoading || !input.trim()}
             className="px-4 py-3 bg-[#8B7355] text-white rounded-xl hover:bg-[#6B5335] transition-colors disabled:opacity-50"
           >
-            {streaming ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+            {streaming || initialLoading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </button>
         </div>
         <p className="text-center text-xs text-[#bbb] mt-2">

@@ -96,6 +96,7 @@ export default function Home() {
         hasResume={!!resume}
         hasChat={hasChat}
         hasReport={hasReport}
+        inviteVerified={inviteVerified}
       />
     );
   }

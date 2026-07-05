@@ -1,6 +1,7 @@
 """启程引导路由"""
 import json
 import os
+import threading
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -36,17 +37,19 @@ def onboarding_chat(req: OnboardingChatRequest):
 
             save_message(req.session_id, "onboarding", "assistant", full_response)
 
-            # AI 发出总结标记时，立刻提取 AI 记忆（供后续报告使用）
+            # 背景提取 AI 记忆，不阻塞 done 事件发送
             if "[ONBOARDING_COMPLETE]" in full_response:
-                try:
-                    from database import get_all_messages, upsert_memories
-                    from llm_service import extract_memories
-                    all_msgs = get_all_messages(req.session_id)
-                    extracted = extract_memories(all_msgs)
-                    if extracted and any(v for v in extracted.values() if v):
-                        upsert_memories(req.session_id, extracted)
-                except Exception as e:
-                    print(f"记忆提取失败: {e}")
+                def extract_bg():
+                    try:
+                        from database import get_all_messages, upsert_memories
+                        from llm_service import extract_memories
+                        all_msgs = get_all_messages(req.session_id)
+                        extracted = extract_memories(all_msgs)
+                        if extracted and any(v for v in extracted.values() if v):
+                            upsert_memories(req.session_id, extracted)
+                    except Exception as e:
+                        print(f"记忆提取失败: {e}")
+                threading.Thread(target=extract_bg, daemon=True).start()
 
             yield f"data: {json.dumps({'done': True,
                                         'onboarding_complete': '[ONBOARDING_COMPLETE]' in full_response})}\n\n"
