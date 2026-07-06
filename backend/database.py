@@ -317,10 +317,16 @@ def get_onboarding_step(session_id: str) -> str:
 
 def create_user(username: str, password_hash: str) -> int:
     conn = _get_conn()
-    cur = _exec(conn,
-        "INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, password_hash))
+    if DB_TYPE == "postgresql":
+        sql = "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id"
+        cur = conn.cursor()
+        cur.execute(sql, (username, password_hash))
+        user_id = cur.fetchone()[0]
+    else:
+        cur = _exec(conn,
+            "INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, password_hash))
+        user_id = cur.lastrowid
     conn.commit()
-    user_id = cur.lastrowid
     conn.close()
     return user_id
 
@@ -362,26 +368,36 @@ def link_session_to_user(session_id: str, user_id: int):
 # Invite
 # ══════════════════════════════════════════════
 
-def verify_invite_code(code: str, session_id: str) -> Optional[str]:
+def check_invite_code_valid(code: str) -> Optional[str]:
+    """仅检查邀请码是否可用，不做任何写操作。返回 role 或 None"""
     conn = _get_conn()
     row = _one(_exec(conn,
         "SELECT is_used, role FROM invite_codes WHERE code=?", (code,)))
+    conn.close()
     if not row or row['is_used']:
-        conn.close()
         return None
-    role = row['role'] or 'user'
+    return row['role'] or 'user'
+
+
+def bind_invite_code(code: str, session_id: str):
+    """绑定邀请码到 session：标记已使用 + 设置 invite_verified"""
+    conn = _get_conn()
     now = datetime.now()
     _exec(conn,
         "UPDATE invite_codes SET is_used=1, used_by_session_id=?, used_at=? WHERE code=?",
         (session_id, now, code))
     _exec(conn,
         "UPDATE sessions SET invite_verified=1 WHERE session_id=?", (session_id,))
-    _exec(conn,
-        "INSERT INTO sessions (session_id, invite_verified) VALUES (?, 1) "
-        "ON CONFLICT(session_id) DO NOTHING",
-        (session_id,))
     conn.commit()
     conn.close()
+
+
+def verify_invite_code(code: str, session_id: str) -> Optional[str]:
+    """兼容旧接口：先检查再绑定"""
+    role = check_invite_code_valid(code)
+    if not role:
+        return None
+    bind_invite_code(code, session_id)
     return role
 
 

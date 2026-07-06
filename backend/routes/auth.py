@@ -35,7 +35,7 @@ def _require_invite() -> bool:
 @router.post("/register")
 def register(req: RegisterRequest):
     """注册新用户，需提供有效邀请码"""
-    from database import get_user_by_username, create_user, verify_invite_code, get_session_for_user
+    from database import get_user_by_username, create_user, get_session_for_user
     from database import update_session_active
     from auth_deps import create_token
 
@@ -53,17 +53,22 @@ def register(req: RegisterRequest):
     if get_user_by_username(username):
         return {"ok": False, "error": "用户名已被注册"}
 
-    # 创建用户（先创建用户以获取 session_id，再验证邀请码）
+    # 先验证邀请码，再创建用户，避免邀请码无效时留下孤儿用户
+    if _require_invite():
+        from database import check_invite_code_valid
+        if not check_invite_code_valid(invite_code):
+            return {"ok": False, "error": "邀请码无效或已被使用"}
+
+    # 创建用户
     password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     user_id = create_user(username, password_hash)
     session_id = get_session_for_user(user_id)
     update_session_active(session_id)
 
-    # 验证并消费邀请码
+    # 绑定邀请码到 session
     if _require_invite():
-        role = verify_invite_code(invite_code, session_id)
-        if not role:
-            return {"ok": False, "error": "邀请码无效或已被使用"}
+        from database import bind_invite_code
+        bind_invite_code(invite_code, session_id)
 
     token = create_token(user_id, username)
     return {"ok": True, "data": {"token": token, "session_id": session_id, "username": username}}

@@ -99,6 +99,7 @@ export default function Home() {
 
   function handleLogin(sid: string) {
     setSessionId(sid);
+    setLoading(true); // 堵住 useEffect 竞态窗口：防止在 status 返回前误触发 /onboarding/complete
     // 登录后重新检查 onboarding 状态
     fetchAPI("/api/onboarding/status")
       .then((r) => {
