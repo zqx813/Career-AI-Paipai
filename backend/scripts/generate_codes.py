@@ -26,7 +26,7 @@ from database import get_connection, _exec as q, _all
 def generate_codes(count: int, export_path: str = None) -> list:
     conn = get_connection()
     existing = set(
-        r[0] for r in _all(q(conn, "SELECT code FROM invite_codes"))
+        r['code'] for r in _all(q(conn, "SELECT code FROM invite_codes"))
     )
     new_codes = []
     attempts = 0
