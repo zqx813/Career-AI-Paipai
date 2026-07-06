@@ -5,6 +5,7 @@
 """
 import os
 import sys
+import json
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -28,13 +29,29 @@ print(f'Session ID: {sid}')
 print(f'使用时间: {row["used_at"]}')
 print()
 
-r = _one(q(conn, 'SELECT name, education, major, skills_json, work_years, raw_text FROM resume_data WHERE session_id=?', (sid,)))
+r = _one(q(conn, 'SELECT name, education, major, education_background_json, skills_json, work_years, raw_text FROM resume_data WHERE session_id=?', (sid,)))
 if r:
     print('=== 简历 ===')
     print(f'姓名: {r["name"]}')
-    print(f'学历: {r["education"]} / {r["major"]}')
+    # 优先用 education/major 列，为空则从 education_background_json 解析
+    edu = r["education"] or ''
+    major = r["major"] or ''
+    if not edu or not major:
+        try:
+            edu_list = json.loads(r['education_background_json'] or '[]')
+            if edu_list:
+                first = edu_list[0]
+                edu = edu or first.get('school', '') or first.get('education', '')
+                major = major or first.get('major', '') or first.get('degree', '')
+        except (json.JSONDecodeError, IndexError):
+            pass
+    print(f'学历: {edu} / {major}')
     print(f'工作年限: {r["work_years"]}')
-    print(f'技能: {r["skills_json"]}')
+    try:
+        skills = json.loads(r['skills_json'] or '[]')
+        print(f'技能: {", ".join(skills) if isinstance(skills, list) else skills}')
+    except (json.JSONDecodeError, TypeError):
+        print(f'技能: {r["skills_json"]}')
     raw = (r["raw_text"] or "")[:500]
     print(f'原文前500字: {raw}')
     print()
