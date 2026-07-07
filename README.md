@@ -2,6 +2,8 @@
 
 面向大学生的 AI 生涯规划工具。上传简历，派派记住你，持续告诉你下一步做什么。
 
+👉 [paipai-ai.top](https://paipai-ai.top)（需邀请码）
+
 ## 技术栈
 
 | 层 | 技术 |
@@ -10,6 +12,23 @@
 | 后端 | Python FastAPI |
 | AI | DeepSeek API |
 | 数据库 | SQLite（本地）/ PostgreSQL（线上）|
+
+## 部署
+
+| 服务 | 平台 | 说明 |
+|------|------|------|
+| 前端 | Vercel | Next.js |
+| 后端 | Railway | FastAPI + PostgreSQL |
+| 国内加速 | 阿里云 ESA | 域名 + 边缘加速 |
+| AI | DeepSeek API | 对话/报告/画像 |
+
+## 项目结构
+
+```
+├── backend/          # FastAPI + SQLite/PostgreSQL
+├── frontend/         # Next.js + Tailwind + shadcn/ui
+└── _scratch/         # 部署文档、测试资料、运维脚本
+```
 
 ## 快速开始
 
